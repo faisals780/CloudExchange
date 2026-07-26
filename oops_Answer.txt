@@ -1649,7 +1649,7 @@ int main(){
 }
 
 -----------------------------------------
-Answer 3
+Answer 4
 
 #include <iostream>
 #include <queue>
@@ -1747,5 +1747,113 @@ int main(){
     delete order3;
     delete order4;
     
+    return 0;
+}
+
+-----------------------------------------
+Answer 5
+
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+
+class Enrollable{
+
+    public:
+    virtual std::string getStudentId() = 0;
+    virtual std::string enroll(std::string courseCode) = 0;
+    virtual const std::unordered_set<std::string>& getEnrolledCourses()const = 0;
+
+    virtual ~Enrollable() = default;
+};
+
+class Student : public Enrollable{
+    private:
+    std::string studentID;
+    std::string studentName;
+    std::unordered_set<std::string> counsling;
+
+    public:
+    Student(std::string studentID, std::string studentName): studentID(studentID), studentName(studentName){}
+
+    std::string getStudentId()override{ return studentID;}
+
+    std::string enroll(std::string courseCode)override{
+        auto result = counsling.insert(courseCode);
+
+        if(result.second){
+            return ("Enrolled in: " + courseCode);
+        }else{
+            return ("Already enrolled in: " + courseCode );
+        }
+    }
+
+    std::string getStudentName()const{return studentName;}
+
+    const std::unordered_set<std::string>& getEnrolledCourses()const{return counsling;}
+
+    virtual ~Student() = default;
+};
+
+class CourseRegistry{
+    private:
+    std::string registryName;
+    std::vector<Student*> genZ;
+
+    public:
+
+    CourseRegistry(std::string registryName) : registryName(registryName){}
+    
+    void registerStudent(Student* s){
+
+        genZ.push_back(s);
+    }
+    Student* getStudentById(std::string studentId){
+
+        if(!genZ.empty()){
+            for(auto& ptr: genZ){
+                if(studentId == ptr->getStudentId()){
+                    return ptr;
+                }
+            }
+        }
+        return nullptr;
+    }
+    std::vector<Student*>& getAllStudents(){return genZ;}
+    
+};
+
+int main(){
+
+    Student* s1 = new Student("A23D2", "Mohd Faisal");
+    Student* s2 = new Student("B43G8", "Furkan");
+    Student* s3 = new Student("H98I0", "Neha");
+
+    std::cout << s1->enroll("CS101") << "\n";
+    std::cout << s1->enroll("CS101") << "\n";
+    std::cout << s1->enroll("CS102") << "\n";
+
+    std::cout << s2->enroll("Phy204") << "\n";
+    std::cout << s3->enroll("DM304") << "\n";
+
+    CourseRegistry c("Tech Department");
+
+    c.registerStudent(s1);
+    c.registerStudent(s2);
+    c.registerStudent(s3);
+
+    for(const auto& ptr: c.getAllStudents()){
+
+        std::cout << "Student ID: " << ptr->getStudentId() << " | Student Name: " << ptr->getStudentName() ;
+        for(auto& pptr: ptr->getEnrolledCourses()) {
+            std::cout << " | Course Code: " << pptr << " ";  
+        }
+        std::cout << std::endl;
+    }
+
+    delete s1;
+    delete s2;
+    delete s3;
+
     return 0;
 }
