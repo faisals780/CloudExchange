@@ -1,136 +1,119 @@
 #include <iostream>
 #include <string>
-#include <list>
 #include <vector>
+#include <sstream>
+#include <iomanip>
 
-class Postable{
-    public:
-
-    virtual std::string getPostId() = 0;
-    virtual std::string getContent() = 0;
-    virtual int getLikes() = 0;
-
-    virtual ~Postable() = default;
-};
-class Post : public Postable{
+class Employee{
     private:
-    std::string postId;
-    std::string content;
-    int likes;
+    std::string employeeID;
+    std::string employeeName;
+    double baseSalary;
 
     public:
-    Post(std::string postId, std::string content) : postId(postId) , content(content){
-        likes = 0;
-    }
-    void addLike(){
-        likes++;
-    }
-    std::string getPostId()override{
-        return postId;
-    }
-    std::string getContent()override{
-        return content;
-    }
-    int getLikes()override{
-        return likes;
+    Employee(std::string employeeID, std::string employeeName, double baseSalary) : employeeID(employeeID) , employeeName(employeeName), baseSalary(baseSalary){}
+
+    std::string getEmployeeID()const{return employeeID;}
+    std::string getEmployeeName()const{return employeeName;}
+    double getBaseSalary()const{return baseSalary;}
+
+    virtual std::string getPayDetails(){
+        std::ostringstream fix;
+        fix << std::fixed << std::setprecision(2) << getBaseSalary();
+        return ("Base salary for " + employeeName + ": " + fix.str()); 
     }
 
-    virtual ~Post() = default;
+    virtual ~Employee() = default;
 };
-class UserProfile{
+
+class FullTimeEmployee : public Employee{
     private:
-    std::string userId;
-    std::string username;
-    std::list<Post*> postPtr;
+    double bonus;
 
     public:
-    UserProfile(std::string userId, std::string username) : userId(userId) , username(username){}
+        FullTimeEmployee(std::string employeeID, std::string employeeName, double baseSalary, double bonus) : Employee(employeeID, employeeName, baseSalary) , bonus(bonus){}
 
-    ~UserProfile(){
-        for(Post* p: postPtr) delete p;
-    }
-    std::string getUserId()const{
-        return userId;
-    }
-    std::string getUsername()const{
-        return username;
-    }
-    void createPost(std::string postId, std::string content){
-        postPtr.push_back(new Post(postId  , content)) ; 
-    }
-    Post* getPostById(std::string postId){
-
-        for(const auto& ptr: postPtr){
-            if(ptr->getPostId() == postId){
-                return ptr;
-            }
+        std::string getPayDetails()override{
+            std::ostringstream fix;
+            fix << Employee::getPayDetails() << std::fixed << std::setprecision(2) << " | Bonus: " << bonus;
+            return fix.str();
         }
-        return nullptr;
-    }
-
-    std::list<std::string> postList;
-
-    std::list<Post*> getAllPost(){
-        return postPtr;
-    }
 
 };
-class SocialFeed{
+
+class PartTimeEmployee : public Employee{
     private:
-    std::vector<UserProfile*> userProfile;
+    int hoursWorked;
+    double hourlyRate;
 
     public:
+    PartTimeEmployee(std::string employeeID, std::string employeeName, double baseSalary, int hoursWorked, double hourlyRate) : Employee(employeeID, employeeName, baseSalary) , hoursWorked(hoursWorked) , hourlyRate(hourlyRate){}
 
-    ~SocialFeed(){
-        for(UserProfile* u: userProfile) delete u;
+    std::string getPayDetails()override{
+        std::ostringstream fix;
+        fix << Employee::getPayDetails() << std::fixed << std::setprecision(2) << " | Hours Worked: " << hoursWorked << " | Hourly Rate: " << hourlyRate;
+        return fix.str();
     }
-    
-    void addUser(UserProfile* user){
-        userProfile.push_back(user);
-    }
-    UserProfile* getUserById(std::string userId){
+};
 
-        for(const auto& ptr: userProfile){
-            if(ptr->getUserId() == userId){
-                return ptr;
-            }
+class Contractor : public Employee{
+    private:
+    double contractAmount;
+
+    public:
+    Contractor(std::string employeeID, std::string employeeName, double baseSalary, double contractAmount) : Employee(employeeID, employeeName, baseSalary) , contractAmount(contractAmount){}
+
+    std::string getPayDetails()override{
+        std::ostringstream fix;
+        fix << Employee::getPayDetails() << std::fixed << std::setprecision(2) << " | Contract Amount: " << contractAmount;
+        return fix.str();
+    }
+};
+
+class PayrollSystem{
+    private:
+    std::string companyName;
+    std::vector<Employee*> emp;
+
+    public:
+    PayrollSystem(std::string companyName): companyName(companyName){}
+
+    std::string getCompanyName()const{return companyName;}
+
+    void addEmployee(Employee* e){
+        emp.push_back(e);
+    }
+
+    std::string generatePayrollReport(){
+        std::ostringstream summary;
+
+        summary << "\n---- All employee Detail ----\n";
+
+        for(auto& ptr: emp){
+             summary << std::fixed << std::setprecision(2) << ptr->getPayDetails() << std::endl;
         }
-        return nullptr;
+        return summary.str();
     }
-    std::string getFeedSummary(){
-        std::string summary = "--- Summary ---\n";
-
-        for(const auto& ptr: userProfile){
-            summary += "UserId: " + ptr->getUserId() + "|   Username: " + ptr->getUsername() + "\n";
-
-            for(const auto& pptr: ptr->getAllPost()){
-                summary += "\n Post ID: " + pptr->getPostId() + "Content: " + pptr->getContent() + "Likes: " + std::to_string(pptr->getLikes()) + "\n" ;
-            }
-        }
-        return summary;
-    }
+    ~PayrollSystem() = default;
 };
 
 int main(){
 
-    SocialFeed* feed = new SocialFeed();
+    Employee* e1 = new FullTimeEmployee("R45Y23", "Mohd Faisal", 45000, 15000);
+    Employee* e2 = new PartTimeEmployee("Q67U98", "Abdul Rahman", 54000, 90, 600);
+    Employee* e3 = new Contractor("B76V12", "Yaseen", 23000, 23000);
 
-    UserProfile* usr = new UserProfile("756840", "john756" );
-    UserProfile* usr1 = new UserProfile("734238", "Carman654");
+    PayrollSystem p("Infosys & Tech");
 
-    usr->createPost("a3f323", "I am uploading Picture.");
-    usr->createPost("75fhf", "I am uploading a song.");
+    p.addEmployee(e1);
+    p.addEmployee(e2);
+    p.addEmployee(e3);
 
-    usr1->createPost("k234h4"  , "Uploading Video.");
-    usr1->createPost("94ghr", "Uploading gif");
+    std::cout << p.generatePayrollReport();
 
-
-    feed->addUser(usr);
-    feed->addUser(usr1);
-
-    std::cout<< feed->getFeedSummary() << std::endl;
-
-    delete feed;
-
+    delete e1;
+    delete e2;
+    delete e3;
+    
     return 0;
 }
