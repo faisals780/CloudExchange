@@ -1,119 +1,165 @@
 #include <iostream>
-#include <string>
-#include <vector>
+#include <unordered_set>
+#include <list>
 #include <sstream>
 #include <iomanip>
 
-class Employee{
-    private:
-    std::string employeeID;
-    std::string employeeName;
-    double baseSalary;
+class Trackable
+{
 
-    public:
-    Employee(std::string employeeID, std::string employeeName, double baseSalary) : employeeID(employeeID) , employeeName(employeeName), baseSalary(baseSalary){}
+public:
+    virtual std::string getID() = 0;
+    virtual std::string getSummary() = 0;
+    virtual ~Trackable() = default;
+};
+class UniversityMember
+{
+private:
+    std::string memberID;
+    std::string memberName;
 
-    std::string getEmployeeID()const{return employeeID;}
-    std::string getEmployeeName()const{return employeeName;}
-    double getBaseSalary()const{return baseSalary;}
+public:
+    UniversityMember(const std::string memberID, const std::string memberName) : memberID(memberID), memberName(memberName) {}
 
-    virtual std::string getPayDetails(){
-        std::ostringstream fix;
-        fix << std::fixed << std::setprecision(2) << getBaseSalary();
-        return ("Base salary for " + employeeName + ": " + fix.str()); 
-    }
+    std::string getMemberID() const { return memberID; }
+    std::string getMemberName() const { return memberName; }
 
-    virtual ~Employee() = default;
+    virtual std::string getRole() = 0;
+
+    virtual ~UniversityMember() = default;
 };
 
-class FullTimeEmployee : public Employee{
-    private:
-    double bonus;
+class Professor : public Trackable, public UniversityMember
+{
+private:
+    std::string subject;
+    std::unordered_set<std::string> researchTopic;
 
-    public:
-        FullTimeEmployee(std::string employeeID, std::string employeeName, double baseSalary, double bonus) : Employee(employeeID, employeeName, baseSalary) , bonus(bonus){}
+public:
+    Professor(const std::string memberID, const std::string memberName, const std::string subject) : UniversityMember(memberID, memberName), subject(subject) {}
 
-        std::string getPayDetails()override{
-            std::ostringstream fix;
-            fix << Employee::getPayDetails() << std::fixed << std::setprecision(2) << " | Bonus: " << bonus;
-            return fix.str();
-        }
-
-};
-
-class PartTimeEmployee : public Employee{
-    private:
-    int hoursWorked;
-    double hourlyRate;
-
-    public:
-    PartTimeEmployee(std::string employeeID, std::string employeeName, double baseSalary, int hoursWorked, double hourlyRate) : Employee(employeeID, employeeName, baseSalary) , hoursWorked(hoursWorked) , hourlyRate(hourlyRate){}
-
-    std::string getPayDetails()override{
-        std::ostringstream fix;
-        fix << Employee::getPayDetails() << std::fixed << std::setprecision(2) << " | Hours Worked: " << hoursWorked << " | Hourly Rate: " << hourlyRate;
-        return fix.str();
-    }
-};
-
-class Contractor : public Employee{
-    private:
-    double contractAmount;
-
-    public:
-    Contractor(std::string employeeID, std::string employeeName, double baseSalary, double contractAmount) : Employee(employeeID, employeeName, baseSalary) , contractAmount(contractAmount){}
-
-    std::string getPayDetails()override{
-        std::ostringstream fix;
-        fix << Employee::getPayDetails() << std::fixed << std::setprecision(2) << " | Contract Amount: " << contractAmount;
-        return fix.str();
-    }
-};
-
-class PayrollSystem{
-    private:
-    std::string companyName;
-    std::vector<Employee*> emp;
-
-    public:
-    PayrollSystem(std::string companyName): companyName(companyName){}
-
-    std::string getCompanyName()const{return companyName;}
-
-    void addEmployee(Employee* e){
-        emp.push_back(e);
+    void addResearchTopic(std::string topic)
+    {
+        researchTopic.insert(topic);
     }
 
-    std::string generatePayrollReport(){
+    std::string getID() override { return getMemberID(); }
+    std::string getRole() override { return "Professor"; }
+    std::string getSummary() override
+    {
         std::ostringstream summary;
-
-        summary << "\n---- All employee Detail ----\n";
-
-        for(auto& ptr: emp){
-             summary << std::fixed << std::setprecision(2) << ptr->getPayDetails() << std::endl;
+        // summary << "Role: " << std::setw(15) << getRole();
+        summary << "Member ID: " << std::setw(10) << std::left <<  getMemberID();
+        summary << "Name: " << std::setw(25)<< std::left  << getMemberName();
+        summary << "Subject: " << std::setw(30) << std::left << subject;
+        summary << "Topic: " ;
+        bool first = true;
+        for (const auto &ptr : researchTopic)
+        {
+            if(!first) summary << ", ";
+                summary << ptr;
+                first = false;
         }
         return summary.str();
     }
-    ~PayrollSystem() = default;
 };
 
-int main(){
+class GradStudent : public UniversityMember, public Trackable
+{
+private:
+    std::string thesisTopic;
+    std::string supervisorID;
 
-    Employee* e1 = new FullTimeEmployee("R45Y23", "Mohd Faisal", 45000, 15000);
-    Employee* e2 = new PartTimeEmployee("Q67U98", "Abdul Rahman", 54000, 90, 600);
-    Employee* e3 = new Contractor("B76V12", "Yaseen", 23000, 23000);
+public:
+    GradStudent(const std::string memberID, const std::string memberName, const std::string thesisTopic, const std::string supervisorID) : UniversityMember(memberID, memberName), thesisTopic(thesisTopic), supervisorID(supervisorID) {}
 
-    PayrollSystem p("Infosys & Tech");
+    std::string getRole()override { return "Graduate Student"; }
 
-    p.addEmployee(e1);
-    p.addEmployee(e2);
-    p.addEmployee(e3);
+    std::string getID() override { return getMemberID(); }
+    std::string getSummary() override
+    {
+        std::ostringstream summary;
+        summary << "Supervisor ID: " << std::setw(10)<<std::left << supervisorID;
+        summary << "Name: " << std::setw(15) << std::left << getMemberName();
+        summary << "Thesis Topic: " << std::setw(15) << thesisTopic;
 
-    std::cout << p.generatePayrollReport();
+        return summary.str();
+    }
+};
 
-    delete e1;
-    delete e2;
-    delete e3;
-    
+class Department
+{
+private:
+    std::string departmentName;
+    std::list<Professor *> faculty;
+    std::list<GradStudent *> grads;
+
+public:
+    Department(std::string departmentName)
+    {
+        this->departmentName = departmentName; // i used this coz kaafi din ho gye the yeh wala constructor banay
+    }
+    void addProfessor(Professor *prof)
+    {
+        faculty.push_back(prof);
+    }
+    void addGradStudent(GradStudent *studt)
+    {
+        grads.push_back(studt);
+    }
+    std::string getDepartmentReport()
+    {
+        std::ostringstream report;
+        report << "\n---- Detail Report ----\n";
+        report << " Professor Detail \n";
+        int count = 0;
+        for (const auto &ptr : faculty)
+        {
+            report << ++count << "- " << ptr->getSummary() << "\n";
+        }
+        report << "\n Graduate Student Detail \n";
+        count = 0;
+        for (const auto &ptr : grads)
+        {
+            report << ++count << "- " << ptr->getSummary() << "\n";
+        }
+        return report.str();
+    }
+   
+};
+
+int main()
+{
+
+    Professor *p1 = new Professor("A34U98", "A.P.J Abdul kalam azad", "Aeronautics Engineering");
+    Professor *p2 = new Professor("H76O12", "Mohd Faisal", "Computer Science");
+
+    GradStudent *g1 = new GradStudent("R6584Y1", "Furkan", "Neural Networks Optimization", "P101");
+    GradStudent *g2 = new GradStudent("H9823Q3", "Aliya", "Autonomous Drone Navigation", "P102");
+
+    Department college("School of Computer Engineering");
+
+    college.addProfessor(p1);
+    college.addProfessor(p2);
+    college.addGradStudent(g1);
+    college.addGradStudent(g2);
+
+    p1->addResearchTopic("AI");
+    p1->addResearchTopic("Machine Learning");
+    p1->addResearchTopic("AI");
+    p1->addResearchTopic("Data Science");
+
+    p2->addResearchTopic("VLSI");
+    p2->addResearchTopic("Robotics");
+    p2->addResearchTopic("VLSI");
+    p2->addResearchTopic("Embedded Systems");
+
+    std::cout << college.getDepartmentReport();
+
+    delete p1;
+    delete p2;
+    delete g1;
+    delete g2;
+
     return 0;
 }
