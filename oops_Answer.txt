@@ -948,11 +948,7 @@ int main()
     return 0;
 }
 ----------------------------------------
-<<<<<<< Updated upstream
-Answer 7 
-=======
 Answer 7
->>>>>>> Stashed changes
 
 
 #include <iostream>
