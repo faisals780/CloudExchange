@@ -1374,3 +1374,774 @@ int main() {
 
     return 0;
 }
+
+-----------------------------------------
+Sheet 5
+Answer 1
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <sstream>
+
+class Note{
+    private:
+    std::string noteId;
+    std::string title;
+    std::ostringstream noteContent;
+
+    public:
+    Note(std::string noteId, std::string title) : noteId(noteId), title(title) {}
+
+    Note(const Note& other) : noteId(other.noteId), title(other.title) {
+        noteContent << other.noteContent.str();
+    }
+
+    void appendContent(std::string text){
+        noteContent << text;
+    }
+    void clearContent(){
+        noteContent.str("");
+        noteContent.clear();
+    }
+    std::string getContent(){
+        return noteContent.str();   
+    }
+    std::string getNoteId()const{return noteId;}
+    std::string getTitle()const{return title;}
+
+    ~Note() = default;
+};
+class NoteBook{
+    private:
+    std::string ownerName;
+    std::vector<Note> note;
+    
+    public:
+    NoteBook(std::string ownerName) : ownerName(ownerName) {}
+
+    void addNote(const Note& textNote){
+        note.push_back(textNote);
+    }
+    Note* getNoteById(std::string noteId){
+
+        for(auto& ptr: note){
+            if(ptr.getNoteId() == noteId){
+                return &ptr;
+            }
+        }
+        return nullptr;
+    }
+    std::vector<Note>& getAllNote(){
+        return note;
+    }
+
+};
+
+int main(){
+
+    NoteBook notebook("Faisal Khan");
+
+    Note note("234", "English");
+    Note note1("532", "Science");
+    Note note2("983", "Maths");
+
+    notebook.addNote(note);
+    notebook.addNote(note1);
+    notebook.addNote(note2);
+
+    note.appendContent("My name is Faiz khan");
+    note.appendContent(" and i am 24 year old.");
+
+    note1.appendContent("My name is Kali khan");
+    note1.appendContent(" and i am 30 year old.");
+
+    note2.appendContent("My name is riya khan");
+    note2.appendContent(" and i am 43 year old.");
+
+
+    for(auto & ptr: notebook.getAllNote()){
+
+        if(ptr.getNoteId() == "983"){
+            std::cout << "Note found." <<std::endl;
+
+            ptr.clearContent();
+            ptr.appendContent("This is new content.");
+        } 
+    }
+
+    for(auto& ptr: notebook.getAllNote()){
+        std::cout << "Title: " << ptr.getTitle() << " | Notes: " << ptr.getContent() << std::endl;
+
+    }
+
+    return 0;
+}
+
+-----------------------------------------
+Answer 2
+
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <stack>
+
+class CodeEditor{
+    private:
+    std::string filename;
+    std::ostringstream currentCodeContent;
+    std::stack<std::string> preStateSnapshots;
+
+    public:
+    CodeEditor(std::string filename) : filename(filename){
+        currentCodeContent.str("");
+    }
+    void typeCode(std::string code){
+        preStateSnapshots.push(currentCodeContent.str());
+
+        currentCodeContent << code << "\n";
+    }
+    std::string undo(){
+        std::string lastSaved;
+        if(preStateSnapshots.empty()){
+            return "Nothing to undo";
+        }
+
+        lastSaved = preStateSnapshots.top();
+        preStateSnapshots.pop();
+        currentCodeContent.str("");
+        currentCodeContent.clear();
+
+        currentCodeContent << lastSaved;
+        return "undo successful";
+    }
+    std::string getCurrentCode(){return currentCodeContent.str();}
+
+    std::string getFilename(){return filename;}
+
+};
+
+int main(){
+
+    CodeEditor c1("Notepad");
+
+    c1.typeCode("int x = 5;");
+    c1.typeCode("int *ptr = &x");
+    c1.typeCode("std::cout<< ptr << std::endl;");
+
+    std::cout << "\n" << c1.getCurrentCode() << std::endl;
+
+    c1.undo();
+    std::cout << "\n" << c1.getCurrentCode() << std::endl;
+    c1.undo();
+    std::cout << "\n" << c1.getCurrentCode() << std::endl;
+
+    return 0;
+}
+
+-----------------------------------------
+Answer 3
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+
+class Vehicle{ 
+    private:
+    std::string vehicleId;
+    std::string brand;
+    int year;
+
+    public:
+
+    Vehicle(std::string vehicleId, std::string brand, int year): vehicleId(vehicleId) , brand(brand) , year(year){}
+
+    std::string getVehicleId()const{return vehicleId;}
+    std::string getBrand()const{return brand;}
+    int getYear()const{return year;}
+
+    virtual std::string getVehicleInfo(){
+        return ("Vehicle ID: " + vehicleId + " | Brand: " + brand + " | Year: " + std::to_string(year));
+    }
+
+    virtual ~Vehicle() = default;
+};
+
+class Car : public Vehicle{
+    private:
+    int numberOfDoor;
+
+    public:
+    Car(std::string vehicleId , std::string brand, int year, int numberOfDoor) : Vehicle(vehicleId, brand, year) , numberOfDoor(numberOfDoor){}
+
+    std::string getVehicleInfo()override {
+        return (Vehicle::getVehicleInfo() + " | Door Type: " + std::to_string(numberOfDoor));
+    }
+
+};
+
+class Bike : public Vehicle{
+    private:
+    std::string bikeType;
+
+    public:
+    Bike(std::string vehicleId , std::string brand, int year, std::string bikeType) : Vehicle(vehicleId, brand, year) , bikeType(bikeType){}
+
+    std::string getVehicleInfo()override{
+        return (Vehicle::getVehicleInfo() + " | Bike Type: " + bikeType);
+    }
+};
+
+class RentalAgency{
+    private:
+    std::string agencyName;
+    std::vector<Vehicle*> veh;
+
+    public:
+
+    RentalAgency(std::string agencyName) : agencyName(agencyName){}
+
+    void addVehicle(Vehicle* v){
+        veh.push_back(v);
+    }
+    std::string getRentalCatalog(){
+        std::ostringstream catalog;
+        catalog << "\n------ Catalog ------\n" << "Agency name: " << agencyName << "\n";
+        for(const auto& ptr: veh){
+            catalog << ptr->getVehicleInfo() << "\n";
+        }
+        return catalog.str();
+    }
+    void delPtr(){
+        for(auto ptr: veh){
+            delete ptr;
+        }
+    }
+};
+
+
+int main(){
+
+    RentalAgency r("Faisal Auto Service");
+
+    Car* c1 = new Car("AE432", "Toyota", 2012 , 4);
+    Car* c2 = new Car("AD572", "BMW", 2016, 2);
+
+    Bike* b1 = new Bike("BM983", "Suzuki", 2021, "Sport");
+    Bike* b2 = new Bike("BH324", "Ninja", 2025, "Super-Bike");
+
+    r.addVehicle(c1);
+    r.addVehicle(c2);
+    r.addVehicle(b1);
+    r.addVehicle(b2);
+
+    std::cout << r.getRentalCatalog();
+
+    r.delPtr();
+
+
+    return 0;
+}
+
+-----------------------------------------
+Answer 4
+
+#include <iostream>
+#include <queue>
+#include <sstream>
+#include <iomanip>
+
+class DeliveryOrder{
+    private:
+    std::string orderID;
+    std::string costumerAddress;
+    double totalAmount;
+
+    public:
+    DeliveryOrder(std::string orderID, std::string costumerAddress, double totalAmount) : orderID(orderID), costumerAddress(costumerAddress), totalAmount(totalAmount){}
+
+    std::string getOrderID()const{return orderID;}
+    std::string getCostumerAddress()const{return costumerAddress;};
+    double getTotalAmount()const{return totalAmount;}
+
+    virtual std::string getDeliveryType() = 0;
+
+    virtual std::string getOrderSummary(){
+        std::stringstream summary;
+        summary << "\n-------- Order Summary --------\n";
+        summary <<"Order ID: " <<std::setw(15) << std::left << orderID << "Costumer Address: " << std::setw(25) << std::left << costumerAddress << "Total Amount: " << std::setw(15) << std::left << std::setprecision(2) << std::fixed << totalAmount << "Delivery Type: " << getDeliveryType() << "\n---- End of Reciept ----\n";
+
+        return summary.str();
+    }
+
+    virtual ~DeliveryOrder() = default;
+};
+class ExpressDelivery : public DeliveryOrder{
+    public:
+    ExpressDelivery(std::string orderID, std::string costumerAddress, double totalAmount) : DeliveryOrder(orderID, costumerAddress, totalAmount){}
+
+    std::string getDeliveryType()override{return "EXPRESS";}
+
+    
+};
+class StandardDelivery : public DeliveryOrder{
+    public:
+    StandardDelivery(std::string orderID, std::string costumerAddress, double totalAmount) : DeliveryOrder(orderID, costumerAddress, totalAmount){}
+
+    std::string getDeliveryType()override{return "STANDARD";}
+
+    
+};
+class DeliveryQueue{
+    private:
+    std::queue<DeliveryOrder*> orders;
+
+    public:
+
+    void placeOrder(DeliveryOrder* obj){
+        orders.push(obj);
+    }
+    DeliveryOrder* dispatchNext(){
+        if(!orders.empty()){
+            DeliveryOrder* currentOrder = orders.front();
+            orders.pop();
+            return currentOrder;
+        }else{
+            return nullptr;
+        }
+    }
+    int getPendingCount(){return orders.size();}
+
+};
+
+int main(){
+
+    DeliveryQueue orderQue;
+
+    ExpressDelivery* order1 = new ExpressDelivery("A56G78","Civil Line 204-A", 510.00);
+    ExpressDelivery* order2 = new ExpressDelivery("N23D94","Asharfabad 314-H", 1350.00);
+
+    StandardDelivery* order3 = new StandardDelivery("T45E54", "Motinagar", 810.00);
+    StandardDelivery* order4 = new StandardDelivery("L15O09", "K.D.A Colony", 1690.00);
+
+    orderQue.placeOrder(order1);
+    orderQue.placeOrder(order2);
+    orderQue.placeOrder(order3);
+    orderQue.placeOrder(order4);
+    
+    while(orderQue.getPendingCount() > 0){
+        DeliveryOrder* summary = orderQue.dispatchNext();
+        if(summary != nullptr){
+            std::cout << summary->getOrderSummary();
+            std::cout << "Pending Orders: " << orderQue.getPendingCount() << std::endl;
+        }
+    };
+
+    delete order1;
+    delete order2;
+    delete order3;
+    delete order4;
+    
+    return 0;
+}
+
+-----------------------------------------
+Answer 5
+
+#include <iostream>
+#include <unordered_set>
+#include <vector>
+
+class Enrollable{
+
+    public:
+    virtual std::string getStudentId() = 0;
+    virtual std::string enroll(std::string courseCode) = 0;
+    virtual const std::unordered_set<std::string>& getEnrolledCourses()const = 0;
+
+    virtual ~Enrollable() = default;
+};
+
+class Student : public Enrollable{
+    private:
+    std::string studentID;
+    std::string studentName;
+    std::unordered_set<std::string> counsling;
+
+    public:
+    Student(std::string studentID, std::string studentName): studentID(studentID), studentName(studentName){}
+
+    std::string getStudentId()override{ return studentID;}
+
+    std::string enroll(std::string courseCode)override{
+        auto result = counsling.insert(courseCode);
+
+        if(result.second){
+            return ("Enrolled in: " + courseCode);
+        }else{
+            return ("Already enrolled in: " + courseCode );
+        }
+    }
+
+    std::string getStudentName()const{return studentName;}
+
+    const std::unordered_set<std::string>& getEnrolledCourses()const{return counsling;}
+
+    virtual ~Student() = default;
+};
+
+class CourseRegistry{
+    private:
+    std::string registryName;
+    std::vector<Student*> genZ;
+
+    public:
+
+    CourseRegistry(std::string registryName) : registryName(registryName){}
+    
+    void registerStudent(Student* s){
+
+        genZ.push_back(s);
+    }
+    Student* getStudentById(std::string studentId){
+
+        if(!genZ.empty()){
+            for(auto& ptr: genZ){
+                if(studentId == ptr->getStudentId()){
+                    return ptr;
+                }
+            }
+        }
+        return nullptr;
+    }
+    std::vector<Student*>& getAllStudents(){return genZ;}
+    
+};
+
+int main(){
+
+    Student* s1 = new Student("A23D2", "Mohd Faisal");
+    Student* s2 = new Student("B43G8", "Furkan");
+    Student* s3 = new Student("H98I0", "Neha");
+
+    std::cout << s1->enroll("CS101") << "\n";
+    std::cout << s1->enroll("CS101") << "\n";
+    std::cout << s1->enroll("CS102") << "\n";
+
+    std::cout << s2->enroll("Phy204") << "\n";
+    std::cout << s3->enroll("DM304") << "\n";
+
+    CourseRegistry c("Tech Department");
+
+    c.registerStudent(s1);
+    c.registerStudent(s2);
+    c.registerStudent(s3);
+
+    for(const auto& ptr: c.getAllStudents()){
+
+        std::cout << "Student ID: " << ptr->getStudentId() << " | Student Name: " << ptr->getStudentName() ;
+        for(auto& pptr: ptr->getEnrolledCourses()) {
+            std::cout << " | Course Code: " << pptr << " ";  
+        }
+        std::cout << std::endl;
+    }
+
+    delete s1;
+    delete s2;
+    delete s3;
+
+    return 0;
+}
+
+-----------------------------------------
+Answer 6
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <iomanip>
+
+class Employee{
+    private:
+    std::string employeeID;
+    std::string employeeName;
+    double baseSalary;
+
+    public:
+    Employee(std::string employeeID, std::string employeeName, double baseSalary) : employeeID(employeeID) , employeeName(employeeName), baseSalary(baseSalary){}
+
+    std::string getEmployeeID()const{return employeeID;}
+    std::string getEmployeeName()const{return employeeName;}
+    double getBaseSalary()const{return baseSalary;}
+
+    virtual std::string getPayDetails(){
+        std::ostringstream fix;
+        fix << std::fixed << std::setprecision(2) << getBaseSalary();
+        return ("Base salary for " + employeeName + ": " + fix.str()); 
+    }
+
+    virtual ~Employee() = default;
+};
+
+class FullTimeEmployee : public Employee{
+    private:
+    double bonus;
+
+    public:
+        FullTimeEmployee(std::string employeeID, std::string employeeName, double baseSalary, double bonus) : Employee(employeeID, employeeName, baseSalary) , bonus(bonus){}
+
+        std::string getPayDetails()override{
+            std::ostringstream fix;
+            fix << Employee::getPayDetails() << std::fixed << std::setprecision(2) << " | Bonus: " << bonus;
+            return fix.str();
+        }
+
+};
+
+class PartTimeEmployee : public Employee{
+    private:
+    int hoursWorked;
+    double hourlyRate;
+
+    public:
+    PartTimeEmployee(std::string employeeID, std::string employeeName, double baseSalary, int hoursWorked, double hourlyRate) : Employee(employeeID, employeeName, baseSalary) , hoursWorked(hoursWorked) , hourlyRate(hourlyRate){}
+
+    std::string getPayDetails()override{
+        std::ostringstream fix;
+        fix << Employee::getPayDetails() << std::fixed << std::setprecision(2) << " | Hours Worked: " << hoursWorked << " | Hourly Rate: " << hourlyRate;
+        return fix.str();
+    }
+};
+
+class Contractor : public Employee{
+    private:
+    double contractAmount;
+
+    public:
+    Contractor(std::string employeeID, std::string employeeName, double baseSalary, double contractAmount) : Employee(employeeID, employeeName, baseSalary) , contractAmount(contractAmount){}
+
+    std::string getPayDetails()override{
+        std::ostringstream fix;
+        fix << Employee::getPayDetails() << std::fixed << std::setprecision(2) << " | Contract Amount: " << contractAmount;
+        return fix.str();
+    }
+};
+
+class PayrollSystem{
+    private:
+    std::string companyName;
+    std::vector<Employee*> emp;
+
+    public:
+    PayrollSystem(std::string companyName): companyName(companyName){}
+
+    std::string getCompanyName()const{return companyName;}
+
+    void addEmployee(Employee* e){
+        emp.push_back(e);
+    }
+
+    std::string generatePayrollReport(){
+        std::ostringstream summary;
+
+        summary << "\n---- All employee Detail ----\n";
+
+        for(auto& ptr: emp){
+             summary << std::fixed << std::setprecision(2) << ptr->getPayDetails() << std::endl;
+        }
+        return summary.str();
+    }
+    ~PayrollSystem() = default;
+};
+
+int main(){
+
+    Employee* e1 = new FullTimeEmployee("R45Y23", "Mohd Faisal", 45000, 15000);
+    Employee* e2 = new PartTimeEmployee("Q67U98", "Abdul Rahman", 54000, 90, 600);
+    Employee* e3 = new Contractor("B76V12", "Yaseen", 23000, 23000);
+
+    PayrollSystem p("Infosys & Tech");
+
+    p.addEmployee(e1);
+    p.addEmployee(e2);
+    p.addEmployee(e3);
+
+    std::cout << p.generatePayrollReport();
+
+    delete e1;
+    delete e2;
+    delete e3;
+    
+    return 0;
+}
+
+-----------------------------------------
+Answer 7
+
+#include <iostream>
+#include <unordered_set>
+#include <list>
+#include <sstream>
+#include <iomanip>
+
+class Trackable
+{
+
+public:
+    virtual std::string getID() = 0;
+    virtual std::string getSummary() = 0;
+    virtual ~Trackable() = default;
+};
+class UniversityMember
+{
+private:
+    std::string memberID;
+    std::string memberName;
+
+public:
+    UniversityMember(const std::string memberID, const std::string memberName) : memberID(memberID), memberName(memberName) {}
+
+    std::string getMemberID() const { return memberID; }
+    std::string getMemberName() const { return memberName; }
+
+    virtual std::string getRole() = 0;
+
+    virtual ~UniversityMember() = default;
+};
+
+class Professor : public Trackable, public UniversityMember
+{
+private:
+    std::string subject;
+    std::unordered_set<std::string> researchTopic;
+
+public:
+    Professor(const std::string memberID, const std::string memberName, const std::string subject) : UniversityMember(memberID, memberName), subject(subject) {}
+
+    void addResearchTopic(std::string topic)
+    {
+        researchTopic.insert(topic);
+    }
+
+    std::string getID() override { return getMemberID(); }
+    std::string getRole() override { return "Professor"; }
+    std::string getSummary() override
+    {
+        std::ostringstream summary;
+        // summary << "Role: " << std::setw(15) << getRole();
+        summary << "Member ID: " << std::setw(10) << std::left <<  getMemberID();
+        summary << "Name: " << std::setw(25)<< std::left  << getMemberName();
+        summary << "Subject: " << std::setw(30) << std::left << subject;
+        summary << "Topic: " ;
+        bool first = true;
+        for (const auto &ptr : researchTopic)
+        {
+            if(!first) summary << ", ";
+                summary << ptr;
+                first = false;
+        }
+        return summary.str();
+    }
+};
+
+class GradStudent : public UniversityMember, public Trackable
+{
+private:
+    std::string thesisTopic;
+    std::string supervisorID;
+
+public:
+    GradStudent(const std::string memberID, const std::string memberName, const std::string thesisTopic, const std::string supervisorID) : UniversityMember(memberID, memberName), thesisTopic(thesisTopic), supervisorID(supervisorID) {}
+
+    std::string getRole()override { return "Graduate Student"; }
+
+    std::string getID() override { return getMemberID(); }
+    std::string getSummary() override
+    {
+        std::ostringstream summary;
+        summary << "Supervisor ID: " << std::setw(10)<<std::left << supervisorID;
+        summary << "Name: " << std::setw(15) << std::left << getMemberName();
+        summary << "Thesis Topic: " << std::setw(15) << thesisTopic;
+
+        return summary.str();
+    }
+};
+
+class Department
+{
+private:
+    std::string departmentName;
+    std::list<Professor *> faculty;
+    std::list<GradStudent *> grads;
+
+public:
+    Department(std::string departmentName)
+    {
+        this->departmentName = departmentName; // i used this coz kaafi din ho gye the yeh wala constructor banay
+    }
+    void addProfessor(Professor *prof)
+    {
+        faculty.push_back(prof);
+    }
+    void addGradStudent(GradStudent *studt)
+    {
+        grads.push_back(studt);
+    }
+    std::string getDepartmentReport()
+    {
+        std::ostringstream report;
+        report << "\n---- Detail Report ----\n";
+        report << " Professor Detail \n";
+        int count = 0;
+        for (const auto &ptr : faculty)
+        {
+            report << ++count << "- " << ptr->getSummary() << "\n";
+        }
+        report << "\n Graduate Student Detail \n";
+        count = 0;
+        for (const auto &ptr : grads)
+        {
+            report << ++count << "- " << ptr->getSummary() << "\n";
+        }
+        return report.str();
+    }
+   
+};
+
+int main()
+{
+
+    Professor *p1 = new Professor("A34U98", "A.P.J Abdul kalam azad", "Aeronautics Engineering");
+    Professor *p2 = new Professor("H76O12", "Mohd Faisal", "Computer Science");
+
+    GradStudent *g1 = new GradStudent("R6584Y1", "Furkan", "Neural Networks Optimization", "P101");
+    GradStudent *g2 = new GradStudent("H9823Q3", "Aliya", "Autonomous Drone Navigation", "P102");
+
+    Department college("School of Computer Engineering");
+
+    college.addProfessor(p1);
+    college.addProfessor(p2);
+    college.addGradStudent(g1);
+    college.addGradStudent(g2);
+
+    p1->addResearchTopic("AI");
+    p1->addResearchTopic("Machine Learning");
+    p1->addResearchTopic("AI");
+    p1->addResearchTopic("Data Science");
+
+    p2->addResearchTopic("VLSI");
+    p2->addResearchTopic("Robotics");
+    p2->addResearchTopic("VLSI");
+    p2->addResearchTopic("Embedded Systems");
+
+    std::cout << college.getDepartmentReport();
+
+    delete p1;
+    delete p2;
+    delete g1;
+    delete g2;
+
+    return 0;
+}

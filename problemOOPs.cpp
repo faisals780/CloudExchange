@@ -1,136 +1,165 @@
 #include <iostream>
-#include <string>
+#include <unordered_set>
 #include <list>
-#include <vector>
+#include <sstream>
+#include <iomanip>
 
-class Postable{
-    public:
+class Trackable
+{
 
-    virtual std::string getPostId() = 0;
-    virtual std::string getContent() = 0;
-    virtual int getLikes() = 0;
-
-    virtual ~Postable() = default;
+public:
+    virtual std::string getID() = 0;
+    virtual std::string getSummary() = 0;
+    virtual ~Trackable() = default;
 };
-class Post : public Postable{
-    private:
-    std::string postId;
-    std::string content;
-    int likes;
+class UniversityMember
+{
+private:
+    std::string memberID;
+    std::string memberName;
 
-    public:
-    Post(std::string postId, std::string content) : postId(postId) , content(content){
-        likes = 0;
-    }
-    void addLike(){
-        likes++;
-    }
-    std::string getPostId()override{
-        return postId;
-    }
-    std::string getContent()override{
-        return content;
-    }
-    int getLikes()override{
-        return likes;
-    }
+public:
+    UniversityMember(const std::string memberID, const std::string memberName) : memberID(memberID), memberName(memberName) {}
 
-    virtual ~Post() = default;
+    std::string getMemberID() const { return memberID; }
+    std::string getMemberName() const { return memberName; }
+
+    virtual std::string getRole() = 0;
+
+    virtual ~UniversityMember() = default;
 };
-class UserProfile{
-    private:
-    std::string userId;
-    std::string username;
-    std::list<Post*> postPtr;
 
-    public:
-    UserProfile(std::string userId, std::string username) : userId(userId) , username(username){}
+class Professor : public Trackable, public UniversityMember
+{
+private:
+    std::string subject;
+    std::unordered_set<std::string> researchTopic;
 
-    ~UserProfile(){
-        for(Post* p: postPtr) delete p;
-    }
-    std::string getUserId()const{
-        return userId;
-    }
-    std::string getUsername()const{
-        return username;
-    }
-    void createPost(std::string postId, std::string content){
-        postPtr.push_back(new Post(postId  , content)) ; 
-    }
-    Post* getPostById(std::string postId){
+public:
+    Professor(const std::string memberID, const std::string memberName, const std::string subject) : UniversityMember(memberID, memberName), subject(subject) {}
 
-        for(const auto& ptr: postPtr){
-            if(ptr->getPostId() == postId){
-                return ptr;
-            }
+    void addResearchTopic(std::string topic)
+    {
+        researchTopic.insert(topic);
+    }
+
+    std::string getID() override { return getMemberID(); }
+    std::string getRole() override { return "Professor"; }
+    std::string getSummary() override
+    {
+        std::ostringstream summary;
+        // summary << "Role: " << std::setw(15) << getRole();
+        summary << "Member ID: " << std::setw(10) << std::left <<  getMemberID();
+        summary << "Name: " << std::setw(25)<< std::left  << getMemberName();
+        summary << "Subject: " << std::setw(30) << std::left << subject;
+        summary << "Topic: " ;
+        bool first = true;
+        for (const auto &ptr : researchTopic)
+        {
+            if(!first) summary << ", ";
+                summary << ptr;
+                first = false;
         }
-        return nullptr;
-    }
-
-    std::list<std::string> postList;
-
-    std::list<Post*> getAllPost(){
-        return postPtr;
-    }
-
-};
-class SocialFeed{
-    private:
-    std::vector<UserProfile*> userProfile;
-
-    public:
-
-    ~SocialFeed(){
-        for(UserProfile* u: userProfile) delete u;
-    }
-    
-    void addUser(UserProfile* user){
-        userProfile.push_back(user);
-    }
-    UserProfile* getUserById(std::string userId){
-
-        for(const auto& ptr: userProfile){
-            if(ptr->getUserId() == userId){
-                return ptr;
-            }
-        }
-        return nullptr;
-    }
-    std::string getFeedSummary(){
-        std::string summary = "--- Summary ---\n";
-
-        for(const auto& ptr: userProfile){
-            summary += "UserId: " + ptr->getUserId() + "|   Username: " + ptr->getUsername() + "\n";
-
-            for(const auto& pptr: ptr->getAllPost()){
-                summary += "\n Post ID: " + pptr->getPostId() + "Content: " + pptr->getContent() + "Likes: " + std::to_string(pptr->getLikes()) + "\n" ;
-            }
-        }
-        return summary;
+        return summary.str();
     }
 };
 
-int main(){
+class GradStudent : public UniversityMember, public Trackable
+{
+private:
+    std::string thesisTopic;
+    std::string supervisorID;
 
-    SocialFeed* feed = new SocialFeed();
+public:
+    GradStudent(const std::string memberID, const std::string memberName, const std::string thesisTopic, const std::string supervisorID) : UniversityMember(memberID, memberName), thesisTopic(thesisTopic), supervisorID(supervisorID) {}
 
-    UserProfile* usr = new UserProfile("756840", "john756" );
-    UserProfile* usr1 = new UserProfile("734238", "Carman654");
+    std::string getRole()override { return "Graduate Student"; }
 
-    usr->createPost("a3f323", "I am uploading Picture.");
-    usr->createPost("75fhf", "I am uploading a song.");
+    std::string getID() override { return getMemberID(); }
+    std::string getSummary() override
+    {
+        std::ostringstream summary;
+        summary << "Supervisor ID: " << std::setw(10)<<std::left << supervisorID;
+        summary << "Name: " << std::setw(15) << std::left << getMemberName();
+        summary << "Thesis Topic: " << std::setw(15) << thesisTopic;
 
-    usr1->createPost("k234h4"  , "Uploading Video.");
-    usr1->createPost("94ghr", "Uploading gif");
+        return summary.str();
+    }
+};
 
+class Department
+{
+private:
+    std::string departmentName;
+    std::list<Professor *> faculty;
+    std::list<GradStudent *> grads;
 
-    feed->addUser(usr);
-    feed->addUser(usr1);
+public:
+    Department(std::string departmentName)
+    {
+        this->departmentName = departmentName; // i used this coz kaafi din ho gye the yeh wala constructor banay
+    }
+    void addProfessor(Professor *prof)
+    {
+        faculty.push_back(prof);
+    }
+    void addGradStudent(GradStudent *studt)
+    {
+        grads.push_back(studt);
+    }
+    std::string getDepartmentReport()
+    {
+        std::ostringstream report;
+        report << "\n---- Detail Report ----\n";
+        report << " Professor Detail \n";
+        int count = 0;
+        for (const auto &ptr : faculty)
+        {
+            report << ++count << "- " << ptr->getSummary() << "\n";
+        }
+        report << "\n Graduate Student Detail \n";
+        count = 0;
+        for (const auto &ptr : grads)
+        {
+            report << ++count << "- " << ptr->getSummary() << "\n";
+        }
+        return report.str();
+    }
+   
+};
 
-    std::cout<< feed->getFeedSummary() << std::endl;
+int main()
+{
 
-    delete feed;
+    Professor *p1 = new Professor("A34U98", "A.P.J Abdul kalam azad", "Aeronautics Engineering");
+    Professor *p2 = new Professor("H76O12", "Mohd Faisal", "Computer Science");
+
+    GradStudent *g1 = new GradStudent("R6584Y1", "Furkan", "Neural Networks Optimization", "P101");
+    GradStudent *g2 = new GradStudent("H9823Q3", "Aliya", "Autonomous Drone Navigation", "P102");
+
+    Department college("School of Computer Engineering");
+
+    college.addProfessor(p1);
+    college.addProfessor(p2);
+    college.addGradStudent(g1);
+    college.addGradStudent(g2);
+
+    p1->addResearchTopic("AI");
+    p1->addResearchTopic("Machine Learning");
+    p1->addResearchTopic("AI");
+    p1->addResearchTopic("Data Science");
+
+    p2->addResearchTopic("VLSI");
+    p2->addResearchTopic("Robotics");
+    p2->addResearchTopic("VLSI");
+    p2->addResearchTopic("Embedded Systems");
+
+    std::cout << college.getDepartmentReport();
+
+    delete p1;
+    delete p2;
+    delete g1;
+    delete g2;
 
     return 0;
 }
