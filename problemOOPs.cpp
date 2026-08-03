@@ -1,165 +1,162 @@
 #include <iostream>
-#include <unordered_set>
-#include <list>
+#include <queue>
 #include <sstream>
+#include <vector>
 #include <iomanip>
 
-class Trackable
-{
+class Passenger{
+    private:
+    std::string passengerID;
+    std::string passengerName;
+    std::string destination;
+    static int totalPassengers;
 
-public:
-    virtual std::string getID() = 0;
-    virtual std::string getSummary() = 0;
-    virtual ~Trackable() = default;
-};
-class UniversityMember
-{
-private:
-    std::string memberID;
-    std::string memberName;
-
-public:
-    UniversityMember(const std::string memberID, const std::string memberName) : memberID(memberID), memberName(memberName) {}
-
-    std::string getMemberID() const { return memberID; }
-    std::string getMemberName() const { return memberName; }
-
-    virtual std::string getRole() = 0;
-
-    virtual ~UniversityMember() = default;
-};
-
-class Professor : public Trackable, public UniversityMember
-{
-private:
-    std::string subject;
-    std::unordered_set<std::string> researchTopic;
-
-public:
-    Professor(const std::string memberID, const std::string memberName, const std::string subject) : UniversityMember(memberID, memberName), subject(subject) {}
-
-    void addResearchTopic(std::string topic)
-    {
-        researchTopic.insert(topic);
+    public:
+    Passenger(const std::string passengerID,const  std::string passengerName,const  std::string destination) : passengerID(passengerID) , passengerName(passengerName), destination(destination){
+        totalPassengers++;
     }
 
-    std::string getID() override { return getMemberID(); }
-    std::string getRole() override { return "Professor"; }
-    std::string getSummary() override
-    {
-        std::ostringstream summary;
-        // summary << "Role: " << std::setw(15) << getRole();
-        summary << "Member ID: " << std::setw(10) << std::left <<  getMemberID();
-        summary << "Name: " << std::setw(25)<< std::left  << getMemberName();
-        summary << "Subject: " << std::setw(30) << std::left << subject;
-        summary << "Topic: " ;
-        bool first = true;
-        for (const auto &ptr : researchTopic)
-        {
-            if(!first) summary << ", ";
-                summary << ptr;
-                first = false;
+    std::string getPassengerID(){return passengerID;}
+    std::string getPassengerName(){return passengerName;}
+    std::string getDestination(){return destination;}
+
+    static int getTotalPassengers();
+    ~Passenger() = default;
+};
+
+int Passenger::totalPassengers = 0;
+
+int Passenger::getTotalPassengers(){return totalPassengers;}
+
+class Flight{
+    private:
+    std::string flightID;
+    std::string origin;
+    std::string destination;
+    static int totalFlights;
+
+    public:
+    Flight(const std::string flightID,const  std::string origin,const  std::string destination): flightID(flightID), origin(origin) , destination(destination){
+        totalFlights++;
+    }
+    std::string getFlightID(){return flightID;}
+    std::string getOrigin(){return origin;}
+    std::string getDestination(){return destination;}
+
+    std::string getFlightInfo(){
+        std::ostringstream info;
+
+        info << "Flight ID: " << std::setw(12) << std::left << flightID ;
+        info << " | Origin: " << std::setw(12) << std::left << origin ;
+        info << " | Destination: " << std::setw(12) << std::left << destination << "\n" ;
+
+        return info.str();
+    }
+    static int getTotalFlights();
+
+};
+int Flight::totalFlights = 0;
+
+int Flight::getTotalFlights(){return totalFlights;}
+
+class CheckInCounter{
+    private:
+    std::string counterCode;
+    Flight plane;
+    std::queue<Passenger*> travellers;
+
+    public:
+    CheckInCounter(const std::string counterCode , Flight plane): counterCode(counterCode) , plane(plane){}
+
+    std::string getCounterCode(){return counterCode;}
+    Flight getPlane(){return plane;}
+    void joinQueue(Passenger* p){
+        travellers.push(p);
+    }
+
+    Passenger* checkInNext(){
+        if(!travellers.empty()){
+            Passenger* temp = travellers.front();
+            travellers.pop();
+            return temp;
+        }else{
+            return nullptr;
         }
-        return summary.str();
+    }
+
+    int getQueueLength(){
+        return travellers.size();
     }
 };
 
-class GradStudent : public UniversityMember, public Trackable
-{
-private:
-    std::string thesisTopic;
-    std::string supervisorID;
+class Airport{
+    private:
+    std::string airportName;
+    std::vector<CheckInCounter> checkIn;
 
-public:
-    GradStudent(const std::string memberID, const std::string memberName, const std::string thesisTopic, const std::string supervisorID) : UniversityMember(memberID, memberName), thesisTopic(thesisTopic), supervisorID(supervisorID) {}
+    public:
+    Airport(std::string airportName) : airportName(airportName){}
 
-    std::string getRole()override { return "Graduate Student"; }
+    void addCounter(CheckInCounter c){
+        checkIn.push_back(c);
+    }
+    std::string getAirportStatus(){
+        std::ostringstream status;
 
-    std::string getID() override { return getMemberID(); }
-    std::string getSummary() override
-    {
-        std::ostringstream summary;
-        summary << "Supervisor ID: " << std::setw(10)<<std::left << supervisorID;
-        summary << "Name: " << std::setw(15) << std::left << getMemberName();
-        summary << "Thesis Topic: " << std::setw(15) << thesisTopic;
+        status << "\n==== " << airportName << " ====\n";
+       for(auto& ptr: checkIn){
+        status << "Counter Code: " << ptr.getCounterCode() << "\n";
+        status << "Flight Info: " << ptr.getPlane().getFlightInfo() << "\n";
+        status << "Queue Length: " << ptr.getQueueLength() << "\n" ;
 
-        return summary.str();
+       }
+        return status.str(); 
     }
 };
 
-class Department
-{
-private:
-    std::string departmentName;
-    std::list<Professor *> faculty;
-    std::list<GradStudent *> grads;
+int main(){
+    
+    Airport a("Istanbul International Airport");
 
-public:
-    Department(std::string departmentName)
-    {
-        this->departmentName = departmentName; // i used this coz kaafi din ho gye the yeh wala constructor banay
-    }
-    void addProfessor(Professor *prof)
-    {
-        faculty.push_back(prof);
-    }
-    void addGradStudent(GradStudent *studt)
-    {
-        grads.push_back(studt);
-    }
-    std::string getDepartmentReport()
-    {
-        std::ostringstream report;
-        report << "\n---- Detail Report ----\n";
-        report << " Professor Detail \n";
-        int count = 0;
-        for (const auto &ptr : faculty)
-        {
-            report << ++count << "- " << ptr->getSummary() << "\n";
-        }
-        report << "\n Graduate Student Detail \n";
-        count = 0;
-        for (const auto &ptr : grads)
-        {
-            report << ++count << "- " << ptr->getSummary() << "\n";
-        }
-        return report.str();
-    }
-   
-};
+    Flight f1("AI-202", "JFK", "LHR");
+    Flight f2("EK-501", "DXB", "SYD");
 
-int main()
-{
+    CheckInCounter c1("CTR-A1", f1);
+    CheckInCounter c2("CTR-B2", f2);
+    
+    
+    Passenger* p1 = new Passenger("P101", "Alice Smith", "LHR");
+    Passenger* p2 = new Passenger("P102", "Bob Jones", "LHR");
+    Passenger* p3 = new Passenger("P203", "Clark Kent", "SYD");
+    
+    Passenger* p01 = new Passenger("P201", "Charlie Brown", "LHR");
+    Passenger* p02 = new Passenger("P103", "Diana Prince", "SYD");
+    Passenger* p03 = new Passenger("P202", "Bruce Wayne", "SYD");
+    
+    c1.joinQueue(p1);
+    c1.joinQueue(p2);
+    c1.joinQueue(p3);
+    
+    c2.joinQueue(p01);
+    c2.joinQueue(p02);
+    c2.joinQueue(p03);
+    
+    Passenger* checkedOut = c1.checkInNext();
+    Passenger* checkedOut2 = c2.checkInNext();
 
-    Professor *p1 = new Professor("A34U98", "A.P.J Abdul kalam azad", "Aeronautics Engineering");
-    Professor *p2 = new Professor("H76O12", "Mohd Faisal", "Computer Science");
+    a.addCounter(c1);
+    a.addCounter(c2);
 
-    GradStudent *g1 = new GradStudent("R6584Y1", "Furkan", "Neural Networks Optimization", "P101");
-    GradStudent *g2 = new GradStudent("H9823Q3", "Aliya", "Autonomous Drone Navigation", "P102");
-
-    Department college("School of Computer Engineering");
-
-    college.addProfessor(p1);
-    college.addProfessor(p2);
-    college.addGradStudent(g1);
-    college.addGradStudent(g2);
-
-    p1->addResearchTopic("AI");
-    p1->addResearchTopic("Machine Learning");
-    p1->addResearchTopic("AI");
-    p1->addResearchTopic("Data Science");
-
-    p2->addResearchTopic("VLSI");
-    p2->addResearchTopic("Robotics");
-    p2->addResearchTopic("VLSI");
-    p2->addResearchTopic("Embedded Systems");
-
-    std::cout << college.getDepartmentReport();
+    std::cout << a.getAirportStatus() << std::endl;
+    std::cout << "Total Passengers Created: " << Passenger::getTotalPassengers() << std::endl;
+    std::cout << "Total Flights Created: " << Flight::getTotalFlights() << std::endl;
 
     delete p1;
     delete p2;
-    delete g1;
-    delete g2;
+    delete p3;
+    delete p01;
+    delete p02;
+    delete p03;
 
     return 0;
 }
